@@ -5,6 +5,9 @@ import { AuthProvider } from "@/context/AuthContext";
 export const metadata: Metadata = {
   title: "Fisco Admin",
   description: "Admin Dashboard for Fisco",
+  icons: {
+    icon: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({

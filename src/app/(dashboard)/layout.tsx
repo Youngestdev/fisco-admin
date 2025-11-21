@@ -7,6 +7,9 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
+import { useState } from "react";
+import { MobileSidebar } from "@/components/layout/MobileSidebar";
+
 export default function DashboardLayout({
     children,
 }: {
@@ -14,6 +17,7 @@ export default function DashboardLayout({
 }) {
     const { isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -36,8 +40,9 @@ export default function DashboardLayout({
     return (
         <div className="flex h-screen bg-background">
             <Sidebar />
+            <MobileSidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
             <div className="flex flex-1 flex-col overflow-hidden">
-                <Header />
+                <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
                 <main className="flex-1 overflow-y-auto p-6">
                     {children}
                 </main>

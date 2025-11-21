@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDashboardStats, DashboardStats } from "@/lib/api";
+import { getDashboardStats, DashboardStats, getUsers } from "@/lib/api";
 import { Loader2, Building2, Users, Package, Wallet, Store, UserPlus, TrendingUp, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, containerVariants, itemVariants, cardVariants } from "@/lib/motion-variants";
@@ -33,14 +33,34 @@ const COLORS = {
 
 export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [signupTrends, setSignupTrends] = useState<{ date: string; count: number }[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
         async function fetchDashboardData() {
             try {
-                const data = await getDashboardStats();
-                setStats(data);
+                const [dashboardData, usersData] = await Promise.all([
+                    getDashboardStats(),
+                    getUsers(1, 50) // Fetch last 50 users for trends
+                ]);
+                setStats(dashboardData);
+
+                // Process signup trends (Last 7 days)
+                const last7Days = Array.from({ length: 7 }, (_, i) => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    return d.toISOString().split('T')[0];
+                }).reverse();
+
+                const trends = last7Days.map(date => {
+                    const count = usersData.filter((user: any) =>
+                        user.created_at.startsWith(date)
+                    ).length;
+                    return { date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), count };
+                });
+
+                setSignupTrends(trends);
             } catch (err) {
                 setError("Failed to load dashboard data");
             } finally {
@@ -99,6 +119,11 @@ export default function DashboardPage() {
     const businessOverviewData = [
         { name: "With Storefronts", value: stats.businesses_with_storefronts, fill: COLORS.success },
         { name: "Without Storefronts", value: stats.total_businesses - stats.businesses_with_storefronts, fill: COLORS.warning },
+    ];
+
+    const userDistributionData = [
+        { name: "Active", value: stats.active_users, fill: COLORS.success },
+        { name: "Inactive", value: stats.inactive_users, fill: COLORS.warning },
     ];
 
     const inventoryStatusData = [
@@ -191,6 +216,53 @@ export default function DashboardPage() {
                 className="grid gap-4 md:grid-cols-2"
                 variants={containerVariants}
             >
+                {/* Business Overview */}
+                <MotionCard variants={itemVariants}>
+                    <CardHeader>
+                        <CardTitle>Business Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie
+                                    data={businessOverviewData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                >
+                                    {businessOverviewData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </MotionCard>
+
+
+                {/* Signup Trends */}
+                <MotionCard variants={itemVariants}>
+                    <CardHeader>
+                        <CardTitle>Signup Trends (Last 7 Days)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={signupTrends}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis allowDecimals={false} />
+                                <Tooltip />
+                                <Line type="monotone" dataKey="count" stroke={COLORS.success} strokeWidth={2} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </MotionCard>
+
                 {/* Orders by Status */}
                 <MotionCard variants={itemVariants}>
                     <CardHeader>
@@ -228,25 +300,25 @@ export default function DashboardPage() {
                     </CardContent>
                 </MotionCard>
 
-                {/* Business Overview */}
+                {/* User Distribution */}
                 <MotionCard variants={itemVariants}>
                     <CardHeader>
-                        <CardTitle>Business Overview</CardTitle>
+                        <CardTitle>User Distribution</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
-                                    data={businessOverviewData}
+                                    data={userDistributionData}
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
-                                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                    label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                                     outerRadius={80}
                                     fill="#8884d8"
                                     dataKey="value"
                                 >
-                                    {businessOverviewData.map((entry, index) => (
+                                    {userDistributionData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.fill} />
                                     ))}
                                 </Pie>
@@ -254,7 +326,9 @@ export default function DashboardPage() {
                             </PieChart>
                         </ResponsiveContainer>
                     </CardContent>
+
                 </MotionCard>
+
 
                 {/* Inventory Status */}
                 <MotionCard variants={itemVariants}>
@@ -350,7 +424,7 @@ export default function DashboardPage() {
                     </CardContent>
                 </MotionCard>
             </motion.div>
-        </motion.div>
+        </motion.div >
     );
 }
 

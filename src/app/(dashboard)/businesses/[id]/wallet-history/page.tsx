@@ -107,8 +107,8 @@ export default function BusinessWalletHistoryPage() {
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
             ) : (
-                <motion.div variants={containerVariants} className="rounded-md border">
-                    <Table>
+                <motion.div variants={containerVariants} className="rounded-md border overflow-x-auto">
+                    <Table className="min-w-[800px]">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Date</TableHead>
@@ -180,12 +180,4 @@ export default function BusinessWalletHistoryPage() {
     );
 }
 
-interface Transaction {
-    _id: string;
-    type: string;
-    amount: number;
-    reference?: string;
-    bank_name?: string;
-    status?: string;
-    created_at: string;
-}
+

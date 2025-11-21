@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getBusiness } from "@/lib/api";
+import { getBusiness, type BusinessDetail } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft, ExternalLink, Package, ShoppingCart, Users, Wallet } from "lucide-react";
@@ -128,21 +128,21 @@ export default function BusinessDetailsPage() {
                         <CardTitle>Profile Information</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Email</p>
-                                <p>{business.email}</p>
+                                <p className="break-all">{business.email}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Phone</p>
                                 <p>{business.phone_no}</p>
                             </div>
-                            <div className="col-span-2">
+                            <div className="col-span-1 md:col-span-2">
                                 <p className="text-sm font-medium text-muted-foreground">Address</p>
                                 <p>{business.address}</p>
                             </div>
                             {business.website && (
-                                <div className="col-span-2">
+                                <div className="col-span-1 md:col-span-2">
                                     <p className="text-sm font-medium text-muted-foreground">Website</p>
                                     <a href={business.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
                                         {business.website}
@@ -209,8 +209,8 @@ export default function BusinessDetailsPage() {
                 </CardHeader>
                 <CardContent>
                     {business.orders.length > 0 ? (
-                        <div className="rounded-md border">
-                            <Table>
+                        <div className="rounded-md border overflow-x-auto">
+                            <Table className="min-w-[800px]">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Reference</TableHead>
@@ -255,8 +255,8 @@ export default function BusinessDetailsPage() {
                 </CardHeader>
                 <CardContent>
                     {business.inventory.length > 0 ? (
-                        <div className="rounded-md border">
-                            <Table>
+                        <div className="rounded-md border overflow-x-auto">
+                            <Table className="min-w-[800px]">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>SKU</TableHead>
@@ -304,8 +304,8 @@ export default function BusinessDetailsPage() {
                     </CardHeader>
                     <CardContent>
                         {business.wallet.transactions.length > 0 ? (
-                            <div className="rounded-md border">
-                                <Table>
+                            <div className="rounded-md border overflow-x-auto">
+                                <Table className="min-w-[800px]">
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Type</TableHead>
@@ -353,8 +353,8 @@ export default function BusinessDetailsPage() {
                 </CardHeader>
                 <CardContent>
                     {business.customers.length > 0 ? (
-                        <div className="rounded-md border">
-                            <Table>
+                        <div className="rounded-md border overflow-x-auto">
+                            <Table className="min-w-[800px]">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Name</TableHead>
@@ -384,52 +384,4 @@ export default function BusinessDetailsPage() {
     );
 }
 
-interface BusinessDetail {
-    _id: string;
-    name: string;
-    email: string;
-    phone_no: string;
-    address: string;
-    website?: string;
-    created_at: string;
-    supported_currencies: string[];
-    customers_count: number;
-    orders_count: number;
-    inventory_count: number;
-    customers: Array<{ name: string; email: string; phone_no: string; address: string }>;
-    orders: Array<{
-        id: string;
-        reference: string;
-        owner: { name: string };
-        items: any[];
-        source: string;
-        timeline: Array<{ status: string }>;
-        created_at: string;
-    }>;
-    inventory: Array<{
-        _id: string;
-        SKU: string;
-        name: string;
-        price: number;
-        quantity_in_stock: number;
-        has_variations: boolean;
-    }>;
-    wallet?: {
-        balance: number;
-        transactions: Array<{
-            _id: string;
-            type: string;
-            amount: number;
-            reference?: string;
-            status?: string;
-            created_at: string;
-        }>;
-    };
-    storefront?: {
-        id: string;
-        name: string;
-        description: string;
-        subdomain: string;
-        custom_domain?: string;
-    };
-}
+

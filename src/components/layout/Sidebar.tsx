@@ -50,7 +50,7 @@ export function Sidebar() {
     };
 
     return (
-        <div className="flex h-screen w-64 flex-col border-r bg-card">
+        <div className="hidden h-screen w-64 flex-col border-r bg-card md:flex">
             <div className="flex h-16 items-center border-b px-6">
                 <h1 className="text-xl font-bold">Fisco Admin</h1>
             </div>
