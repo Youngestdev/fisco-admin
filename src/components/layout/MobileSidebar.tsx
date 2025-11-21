@@ -1,6 +1,5 @@
 "use client";
 
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Sidebar } from "./Sidebar";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
