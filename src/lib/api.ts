@@ -42,8 +42,16 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     return response.json();
 }
 
-export async function getUsers(page = 1, limit = 10, inactive = false) {
-    return fetchWithAuth(`/admin/users?page_number=${page}&page_size=${limit}&inactive=${inactive}`);
+export async function getUsers(page = 1, limit = 10, inactive = false): Promise<UserSearchResult[]> {
+    const data = await fetchWithAuth(`/admin/users?page_number=${page}&page_size=${limit}&inactive=${inactive}`);
+    if (Array.isArray(data)) {
+        return data as UserSearchResult[];
+    }
+    if (data && Array.isArray((data as any).users)) {
+        return (data as any).users as UserSearchResult[];
+    }
+    // Fallback to empty array if unexpected shape
+    return [];
 }
 
 export async function getOrders() {
@@ -479,3 +487,266 @@ export async function searchOrders(query: string): Promise<OrderSearchResult[]> 
     return fetchWithAuth(`/admin/orders/search?q=${encodeURIComponent(query)}`);
 }
 
+
+// ============================================================================
+// Marketing API
+// ============================================================================
+
+export interface Campaign {
+    _id: string;
+    business_id?: string | null;
+    name: string;
+    subject: string;
+    content: string;
+    type: "email" | "sms";
+    status: "draft" | "scheduled" | "sending" | "completed" | "cancelled";
+    segment_id: string;
+    scheduled_at?: string | null;
+    sent_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    created_by: string;
+    template?: string;
+}
+
+export interface CreateCampaignRequest {
+    name: string;
+    subject: string;
+    content: string;
+    type: "email" | "sms";
+    segment_id: string;
+    scheduled_at?: string;
+    template: string;
+}
+
+export interface UpdateCampaignRequest {
+    name?: string;
+    subject?: string;
+    content?: string;
+    type?: "email" | "sms";
+    segment_id?: string;
+    scheduled_at?: string;
+    template?: string;
+}
+
+export interface Segment {
+    _id: string;
+    business_id?: string | null;
+    name: string;
+    description: string;
+    type: "manual" | "dynamic";
+    manual_user_ids: string[];
+    criteria: Record<string, any> | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateSegmentRequest {
+    name: string;
+    description?: string;
+    type: "manual" | "dynamic";
+    manual_user_ids?: string[];
+    criteria?: Record<string, any>;
+}
+
+export interface UpdateSegmentRequest {
+    name?: string;
+    description?: string;
+    type?: "manual" | "dynamic";
+    manual_user_ids?: string[];
+    criteria?: Record<string, any>;
+}
+
+export interface WorkflowStep {
+    type: "wait" | "send_email" | "send_sms" | "condition";
+    duration?: number;
+    template_id?: string;
+    subject?: string;
+    condition?: string;
+}
+
+export interface Workflow {
+    _id: string;
+    business_id?: string | null;
+    name: string;
+    description: string;
+    trigger_type: "event" | "schedule";
+    trigger_config: Record<string, any>;
+    steps: WorkflowStep[];
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateWorkflowRequest {
+    name: string;
+    description?: string;
+    trigger_type: "event" | "schedule";
+    trigger_config: Record<string, any>;
+    steps: WorkflowStep[];
+}
+
+export interface UpdateWorkflowRequest {
+    name?: string;
+    description?: string;
+    trigger_type?: "event" | "schedule";
+    trigger_config?: Record<string, any>;
+    steps?: WorkflowStep[];
+}
+
+// Campaigns
+export async function getCampaigns(): Promise<Campaign[]> {
+    return fetchWithAuth("/admin/marketing/campaigns");
+}
+
+export async function getCampaign(campaignId: string): Promise<Campaign> {
+    return fetchWithAuth(`/admin/marketing/campaigns/${campaignId}`);
+}
+
+export async function createCampaign(data: CreateCampaignRequest): Promise<Campaign> {
+    return fetchWithAuth("/admin/marketing/campaigns", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+}
+
+export async function sendCampaign(campaignId: string): Promise<{ message: string }> {
+    return fetchWithAuth(`/admin/marketing/campaigns/${campaignId}/send`, {
+        method: "POST",
+    });
+}
+
+export async function updateCampaign(campaignId: string, data: UpdateCampaignRequest): Promise<Campaign> {
+    return fetchWithAuth(`/admin/marketing/campaigns/${campaignId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+}
+
+export async function deleteCampaign(campaignId: string): Promise<{ message: string }> {
+    return fetchWithAuth(`/admin/marketing/campaigns/${campaignId}`, {
+        method: "DELETE",
+    });
+}
+
+export async function resendCampaign(campaignId: string): Promise<{ message: string }> {
+    return fetchWithAuth(`/admin/marketing/campaigns/${campaignId}/resend`, {
+        method: "POST",
+    });
+}
+
+// Segments
+export async function getSegments(): Promise<Segment[]> {
+    return fetchWithAuth("/admin/marketing/segments");
+}
+
+export async function getSegment(segmentId: string): Promise<Segment> {
+    return fetchWithAuth(`/admin/marketing/segments/${segmentId}`);
+}
+
+export async function createSegment(data: CreateSegmentRequest): Promise<Segment> {
+    return fetchWithAuth("/admin/marketing/segments", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateSegment(segmentId: string, data: UpdateSegmentRequest): Promise<Segment> {
+    return fetchWithAuth(`/admin/marketing/segments/${segmentId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+}
+
+export async function deleteSegment(segmentId: string): Promise<{ message: string }> {
+    return fetchWithAuth(`/admin/marketing/segments/${segmentId}`, {
+        method: "DELETE",
+    });
+}
+
+export interface SegmentAudience {
+    segment_id: string;
+    segment_name: string;
+    total_users: number;
+    users: {
+        _id: string;
+        business_id: string;
+        name: string;
+        email: string;
+        is_active: boolean;
+        created_at: string;
+    }[];
+}
+
+export async function getSegmentAudience(segmentId: string): Promise<SegmentAudience> {
+    return fetchWithAuth(`/admin/marketing/segments/${segmentId}/audience`);
+}
+
+// Workflows
+export async function getWorkflows(): Promise<Workflow[]> {
+    return fetchWithAuth("/admin/marketing/workflows");
+}
+
+export async function getWorkflow(workflowId: string): Promise<Workflow> {
+    return fetchWithAuth(`/admin/marketing/workflows/${workflowId}`);
+}
+
+export async function createWorkflow(data: CreateWorkflowRequest): Promise<Workflow> {
+    return fetchWithAuth("/admin/marketing/workflows", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateWorkflow(workflowId: string, data: UpdateWorkflowRequest): Promise<Workflow> {
+    return fetchWithAuth(`/admin/marketing/workflows/${workflowId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateWorkflowState(workflowId: string, isActive: boolean): Promise<Workflow> {
+    return fetchWithAuth(`/admin/marketing/workflows/${workflowId}/state`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ is_active: isActive }),
+    });
+}
+
+export async function deleteWorkflow(workflowId: string): Promise<{ message: string }> {
+    return fetchWithAuth(`/admin/marketing/workflows/${workflowId}`, {
+        method: "DELETE",
+    });
+}
+
+export interface MarketingStats {
+    total_campaigns: number;
+    total_emails_sent: number;
+    total_emails_opened: number;
+    total_emails_clicked: number;
+    recent_campaigns: Campaign[];
+}
+
+export async function getMarketingStats(): Promise<MarketingStats> {
+    return fetchWithAuth("/admin/marketing/stats");
+}

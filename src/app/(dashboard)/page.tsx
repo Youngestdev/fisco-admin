@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { getDashboardStats, DashboardStats, getUsers } from "@/lib/api";
-import { Loader2, Building2, Users, Package, Wallet, Store, UserPlus, TrendingUp, AlertTriangle } from "lucide-react";
+import { downloadChartAsPng } from "@/lib/chart-utils";
+import { Loader2, Building2, Users, Package, Wallet, Store, UserPlus, TrendingUp, AlertTriangle, Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, containerVariants, itemVariants, cardVariants } from "@/lib/motion-variants";
 import {
@@ -36,6 +38,15 @@ export default function DashboardPage() {
     const [signupTrends, setSignupTrends] = useState<{ date: string; count: number }[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    // Refs for chart downloads
+    const businessOverviewRef = useRef<HTMLDivElement>(null);
+    const signupTrendsRef = useRef<HTMLDivElement>(null);
+    const ordersByStatusRef = useRef<HTMLDivElement>(null);
+    const orderTrendsRef = useRef<HTMLDivElement>(null);
+    const userDistributionRef = useRef<HTMLDivElement>(null);
+    const inventoryStatusRef = useRef<HTMLDivElement>(null);
+    const financialOverviewRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         async function fetchDashboardData() {
@@ -218,10 +229,17 @@ export default function DashboardPage() {
             >
                 {/* Business Overview */}
                 <MotionCard variants={itemVariants}>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Business Overview</CardTitle>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadChartAsPng(businessOverviewRef.current, "business-overview")}
+                        >
+                            <Download className="h-4 w-4" />
+                        </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent ref={businessOverviewRef}>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
@@ -247,10 +265,17 @@ export default function DashboardPage() {
 
                 {/* Signup Trends */}
                 <MotionCard variants={itemVariants}>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Signup Trends (Last 7 Days)</CardTitle>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadChartAsPng(signupTrendsRef.current, "signup-trends")}
+                        >
+                            <Download className="h-4 w-4" />
+                        </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent ref={signupTrendsRef}>
                         <ResponsiveContainer width="100%" height={300}>
                             <LineChart data={signupTrends}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -265,10 +290,17 @@ export default function DashboardPage() {
 
                 {/* Orders by Status */}
                 <MotionCard variants={itemVariants}>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Orders by Status</CardTitle>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadChartAsPng(ordersByStatusRef.current, "orders-by-status")}
+                        >
+                            <Download className="h-4 w-4" />
+                        </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent ref={ordersByStatusRef}>
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={ordersByStatusData}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -283,10 +315,17 @@ export default function DashboardPage() {
 
                 {/* Order Trends */}
                 <MotionCard variants={itemVariants}>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Order Trends</CardTitle>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadChartAsPng(orderTrendsRef.current, "order-trends")}
+                        >
+                            <Download className="h-4 w-4" />
+                        </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent ref={orderTrendsRef}>
                         <ResponsiveContainer width="100%" height={300}>
                             <LineChart data={orderTrendsData}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -302,10 +341,17 @@ export default function DashboardPage() {
 
                 {/* User Distribution */}
                 <MotionCard variants={itemVariants}>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>User Distribution</CardTitle>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadChartAsPng(userDistributionRef.current, "user-distribution")}
+                        >
+                            <Download className="h-4 w-4" />
+                        </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent ref={userDistributionRef}>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
@@ -332,10 +378,17 @@ export default function DashboardPage() {
 
                 {/* Inventory Status */}
                 <MotionCard variants={itemVariants}>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Inventory Status</CardTitle>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadChartAsPng(inventoryStatusRef.current, "inventory-status")}
+                        >
+                            <Download className="h-4 w-4" />
+                        </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent ref={inventoryStatusRef}>
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={inventoryStatusData}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -351,10 +404,17 @@ export default function DashboardPage() {
 
             {/* Financial Overview */}
             <MotionCard variants={itemVariants}>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Financial Overview</CardTitle>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadChartAsPng(financialOverviewRef.current, "financial-overview")}
+                    >
+                        <Download className="h-4 w-4" />
+                    </Button>
                 </CardHeader>
-                <CardContent>
+                <CardContent ref={financialOverviewRef}>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={financialData}>
                             <CartesianGrid strokeDasharray="3 3" />

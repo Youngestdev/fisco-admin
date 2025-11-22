@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { getUser, activateUser, deactivateUser } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle, XCircle, Building2 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { pageVariants, containerVariants, cardVariants } from "@/lib/motion-variants";
@@ -145,6 +146,16 @@ export default function UserDetailsPage() {
                                     )}
                                     Deactivate User
                                 </Button>
+                            </div>
+                        )}
+                        {user.business_id && (
+                            <div className="pt-4">
+                                <Link href={`/businesses/${user.business_id}`}>
+                                    <Button variant="outline" className="w-full">
+                                        <Building2 className="mr-2 h-4 w-4" />
+                                        View Business
+                                    </Button>
+                                </Link>
                             </div>
                         )}
                     </CardContent>
