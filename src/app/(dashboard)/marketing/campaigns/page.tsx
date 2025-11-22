@@ -7,6 +7,7 @@ import { Plus, Mail, Loader2 } from "lucide-react";
 import { getCampaigns, Campaign } from "@/lib/api";
 import { format } from "date-fns";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function CampaignsPage() {
     const router = useRouter();
@@ -36,7 +37,12 @@ export default function CampaignsPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <motion.div
+            className="space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+        >
             <div className="flex items-center justify-between">
                 <div>
                     <h3 className="text-lg font-medium">Campaigns</h3>
@@ -45,10 +51,12 @@ export default function CampaignsPage() {
                     </p>
                 </div>
                 <Link href="/marketing/campaigns/new">
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Campaign
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Campaign
+                        </Button>
+                    </motion.div>
                 </Link>
             </div>
 
@@ -72,15 +80,23 @@ export default function CampaignsPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                campaigns.map((campaign) => (
-                                    <tr key={campaign._id} className="border-b transition-colors hover:bg-muted/50 cursor-pointer" onClick={() => router.push(`/marketing/campaigns/${campaign._id}`)}>
-                                        <td className="p-4 align-middle font-medium">{campaign.name}</td>
+                                campaigns.map((campaign, index) => (
+                                    <motion.tr
+                                        key={campaign._id}
+                                        className="border-b transition-all hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent cursor-pointer group"
+                                        onClick={() => router.push(`/marketing/campaigns/${campaign._id}`)}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                                        whileHover={{ x: 4 }}
+                                    >
+                                        <td className="p-4 align-middle font-medium group-hover:text-primary transition-colors">{campaign.name}</td>
                                         <td className="p-4 align-middle">
-                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${campaign.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                campaign.status === 'sending' ? 'bg-blue-100 text-blue-800' :
-                                                    campaign.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                                                        campaign.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                            'bg-gray-100 text-gray-800'
+                                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium shadow-sm ${campaign.status === 'completed' ? 'bg-gradient-to-r from-green-100 to-green-50 text-green-800 border border-green-200' :
+                                                campaign.status === 'sending' ? 'bg-gradient-to-r from-blue-100 to-blue-50 text-blue-800 border border-blue-200' :
+                                                    campaign.status === 'scheduled' ? 'bg-gradient-to-r from-blue-100 to-blue-50 text-blue-800 border border-blue-200' :
+                                                        campaign.status === 'cancelled' ? 'bg-gradient-to-r from-red-100 to-red-50 text-red-800 border border-red-200' :
+                                                            'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-800 border border-gray-200'
                                                 }`}>
                                                 {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                                             </span>
@@ -98,13 +114,13 @@ export default function CampaignsPage() {
                                         <td className="p-4 align-middle">
                                             {format(new Date(campaign.created_at), 'PPP')}
                                         </td>
-                                    </tr>
+                                    </motion.tr>
                                 ))
                             )}
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }

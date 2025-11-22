@@ -34,7 +34,7 @@ export default function MarketingLayout({
                         className={cn(
                             "px-4 py-2 text-sm font-medium rounded-md transition-colors",
                             pathname === tab.href || (tab.href !== "/marketing" && pathname.startsWith(tab.href))
-                                ? "bg-background text-foreground shadow-sm"
+                                ? "bg-primary text-primary-foreground shadow-sm"
                                 : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
                         )}
                     >
