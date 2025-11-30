@@ -36,7 +36,7 @@ export default function NewCampaignPage() {
         async function loadSegments() {
             try {
                 const data = await getSegments();
-                setSegments(data);
+                setSegments(data.segments || []);
             } catch (error) {
                 console.error("Failed to load segments:", error);
             }

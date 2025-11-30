@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getSegment, getSegmentAudience, updateSegment, deleteSegment, Segment, SegmentAudience, UpdateSegmentRequest } from "@/lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getSegment, getSegmentAudience, updateSegment, deleteSegment, getUsers, Segment, SegmentAudience, UpdateSegmentRequest, UserSearchResult } from "@/lib/api";
 import { Loader2, ArrowLeft, Users, Mail, Calendar, Trash2, Edit } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -25,7 +26,12 @@ export default function SegmentDetailPage() {
     const [isLoadingAudience, setIsLoadingAudience] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [allUsers, setAllUsers] = useState<UserSearchResult[]>([]);
+    const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+    const [userSearchQuery, setUserSearchQuery] = useState("");
     const [editFormData, setEditFormData] = useState<Partial<UpdateSegmentRequest>>({});
+    const [editCriteria, setEditCriteria] = useState<Record<string, any>>({});
 
     useEffect(() => {
         async function loadSegment() {
@@ -46,6 +52,23 @@ export default function SegmentDetailPage() {
         }
         loadSegment();
     }, [segmentId]);
+
+    // Fetch all users for user picker
+    useEffect(() => {
+        async function loadUsers() {
+            setIsLoadingUsers(true);
+            try {
+                // Fetch a large number of users for selection
+                const users = await getUsers(1, 1000);
+                setAllUsers(users);
+            } catch (error) {
+                console.error("Failed to load users:", error);
+            } finally {
+                setIsLoadingUsers(false);
+            }
+        }
+        loadUsers();
+    }, []);
 
     const handleDelete = async () => {
         if (!segment) return;
@@ -73,20 +96,77 @@ export default function SegmentDetailPage() {
             description: segment.description,
             manual_user_ids: segment.manual_user_ids || [],
         });
+        setEditCriteria(segment.criteria || {});
+        setUserSearchQuery(""); // Reset search when opening dialog
         setIsEditing(true);
+    };
+
+    const updateEditCriteria = (field: string, value: any) => {
+        setEditCriteria(prev => {
+            const newCriteria = { ...prev };
+            if (value === null || value === undefined || value === "" || value === "__any__") {
+                delete newCriteria[field];
+            } else {
+                newCriteria[field] = value;
+            }
+            return newCriteria;
+        });
+    };
+
+    const updateEditDateBetween = (field: 'start' | 'end', value: string) => {
+        setEditCriteria(prev => {
+            const current = prev.created_between || {};
+            if (!value) {
+                const { [field]: removed, ...rest } = current;
+                return { ...prev, created_between: Object.keys(rest).length > 0 ? rest : undefined };
+            }
+            return { ...prev, created_between: { ...current, [field]: value } };
+        });
+    };
+
+    const toggleUserSelection = (userId: string) => {
+        const currentIds = editFormData.manual_user_ids || [];
+        if (currentIds.includes(userId)) {
+            setEditFormData({
+                ...editFormData,
+                manual_user_ids: currentIds.filter(id => id !== userId)
+            });
+        } else {
+            setEditFormData({
+                ...editFormData,
+                manual_user_ids: [...currentIds, userId]
+            });
+        }
     };
 
     const handleUpdate = async () => {
         if (!segment) return;
 
+        setIsUpdating(true);
         try {
-            const updated = await updateSegment(segment._id, editFormData);
-            setSegment(updated);
+            const updateData: UpdateSegmentRequest = {
+                name: editFormData.name,
+                description: editFormData.description,
+            };
+
+            // Add type-specific fields
+            if (segment.type === "manual") {
+                updateData.manual_user_ids = editFormData.manual_user_ids;
+            } else if (segment.type === "dynamic") {
+                updateData.criteria = editCriteria;
+            }
+
+            await updateSegment(segment._id, updateData);
+            toast.success("Segment updated successfully");
             setIsEditing(false);
-            toast.success("Segment updated successfully!");
+            // Reload segment data
+            const updatedSegment = await getSegment(segmentId);
+            setSegment(updatedSegment);
         } catch (error) {
             console.error("Failed to update segment:", error);
-            toast.error("Failed to update segment. Please try again.");
+            toast.error("Failed to update segment");
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -157,7 +237,7 @@ export default function SegmentDetailPage() {
                     <DialogHeader>
                         <DialogTitle>Edit Segment</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
                         <div className="space-y-2">
                             <Label htmlFor="edit-name">Segment Name</Label>
                             <Input
@@ -174,52 +254,262 @@ export default function SegmentDetailPage() {
                                 onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                             />
                         </div>
-                        {segment?.type === "manual" && (
-                            <div className="space-y-2">
-                                <Label>Manual User IDs</Label>
-                                <div className="space-y-2">
-                                    {(editFormData.manual_user_ids || []).map((userId, index) => (
-                                        <div key={index} className="flex gap-2">
-                                            <Input
-                                                readOnly
-                                                value={userId}
-                                                className="flex-1"
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="icon"
-                                                onClick={() => {
-                                                    const newIds = [...(editFormData.manual_user_ids || [])];
-                                                    newIds.splice(index, 1);
-                                                    setEditFormData({ ...editFormData, manual_user_ids: newIds });
-                                                }}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                    <div className="flex gap-2">
-                                        <Input
-                                            placeholder="Enter user ID to add"
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    const value = e.currentTarget.value.trim();
-                                                    if (value && !(editFormData.manual_user_ids || []).includes(value)) {
-                                                        setEditFormData({
-                                                            ...editFormData,
-                                                            manual_user_ids: [...(editFormData.manual_user_ids || []), value]
-                                                        });
-                                                        e.currentTarget.value = '';
-                                                    }
-                                                }
-                                            }}
-                                        />
+
+                        {segment?.type === "dynamic" && (
+                            <div className="space-y-4 border rounded-md p-4">
+                                <Label className="text-base font-semibold">Criteria Builder</Label>
+                                <p className="text-xs text-muted-foreground">Configure filtering criteria for this dynamic segment</p>
+
+                                {/* Boolean Criteria */}
+                                <div className="space-y-3">
+                                    <Label className="text-sm font-medium">User Status</Label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Select value={editCriteria.is_active?.toString() || "__any__"} onValueChange={(v) => updateEditCriteria('is_active', v === "" ? null : v === "true")}>
+                                            <SelectTrigger className="h-9">
+                                                <SelectValue placeholder="Is Active" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__any__">Any</SelectItem>
+                                                <SelectItem value="true">Active</SelectItem>
+                                                <SelectItem value="false">Inactive</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={editCriteria.nin_verified?.toString() || "__any__"} onValueChange={(v) => updateEditCriteria('nin_verified', v === "" ? null : v === "true")}>
+                                            <SelectTrigger className="h-9">
+                                                <SelectValue placeholder="NIN Verified" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__any__">Any</SelectItem>
+                                                <SelectItem value="true">Verified</SelectItem>
+                                                <SelectItem value="false">Not Verified</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={editCriteria.bvn_verified?.toString() || "__any__"} onValueChange={(v) => updateEditCriteria('bvn_verified', v === "" ? null : v === "true")}>
+                                            <SelectTrigger className="h-9">
+                                                <SelectValue placeholder="BVN Verified" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__any__">Any</SelectItem>
+                                                <SelectItem value="true">Verified</SelectItem>
+                                                <SelectItem value="false">Not Verified</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={editCriteria.business_info_verified?.toString() || "__any__"} onValueChange={(v) => updateEditCriteria('business_info_verified', v === "" ? null : v === "true")}>
+                                            <SelectTrigger className="h-9">
+                                                <SelectValue placeholder="Business Info" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__any__">Any</SelectItem>
+                                                <SelectItem value="true">Verified</SelectItem>
+                                                <SelectItem value="false">Not Verified</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Press Enter to add a user ID
-                                    </p>
                                 </div>
+
+                                {/* User Features */}
+                                <div className="space-y-3">
+                                    <Label className="text-sm font-medium">User Features</Label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Select value={editCriteria.has_business?.toString() || "__any__"} onValueChange={(v) => updateEditCriteria('has_business', v === "" ? null : v === "true")}>
+                                            <SelectTrigger className="h-9">
+                                                <SelectValue placeholder="Has Business" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__any__">Any</SelectItem>
+                                                <SelectItem value="true">Yes</SelectItem>
+                                                <SelectItem value="false">No</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={editCriteria.has_storefront?.toString() || "__any__"} onValueChange={(v) => updateEditCriteria('has_storefront', v === "" ? null : v === "true")}>
+                                            <SelectTrigger className="h-9">
+                                                <SelectValue placeholder="Has Storefront" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__any__">Any</SelectItem>
+                                                <SelectItem value="true">Yes</SelectItem>
+                                                <SelectItem value="false">No</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={editCriteria.deletion_requested?.toString() || "__any__"} onValueChange={(v) => updateEditCriteria('deletion_requested', v === "" ? null : v === "true")}>
+                                            <SelectTrigger className="h-9">
+                                                <SelectValue placeholder="Deletion Requested" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__any__">Any</SelectItem>
+                                                <SelectItem value="true">Yes</SelectItem>
+                                                <SelectItem value="false">No</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {/* Tier Selection */}
+                                <div className="space-y-3">
+                                    <Label className="text-sm font-medium">Tier & KYC</Label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Select value={editCriteria.tier || "__any__"} onValueChange={(v) => updateEditCriteria('tier', v || null)}>
+                                            <SelectTrigger className="h-9">
+                                                <SelectValue placeholder="User Tier" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__any__">Any</SelectItem>
+                                                <SelectItem value="EARLY_USER">Early User</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={editCriteria.kyc_tier || "__any__"} onValueChange={(v) => updateEditCriteria('kyc_tier', v || null)}>
+                                            <SelectTrigger className="h-9">
+                                                <SelectValue placeholder="KYC Tier" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__any__">Any</SelectItem>
+                                                <SelectItem value="TIER_0">Tier 0</SelectItem>
+                                                <SelectItem value="TIER_1">Tier 1</SelectItem>
+                                                <SelectItem value="TIER_2">Tier 2</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {/* Date Criteria */}
+                                <div className="space-y-3">
+                                    <Label className="text-sm font-medium">Account Creation Date</Label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <Label htmlFor="edit_created_after" className="text-xs text-muted-foreground">Created After</Label>
+                                            <Input
+                                                id="edit_created_after"
+                                                type="datetime-local"
+                                                value={editCriteria.created_after || "__any__"}
+                                                onChange={(e) => updateEditCriteria('created_after', e.target.value || null)}
+                                                className="h-9"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="edit_created_before" className="text-xs text-muted-foreground">Created Before</Label>
+                                            <Input
+                                                id="edit_created_before"
+                                                type="datetime-local"
+                                                value={editCriteria.created_before || "__any__"}
+                                                onChange={(e) => updateEditCriteria('created_before', e.target.value || null)}
+                                                className="h-9"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="pt-2">
+                                        <Label className="text-xs text-muted-foreground mb-2 block">Or specify a date range:</Label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <Label htmlFor="edit_range_start" className="text-xs text-muted-foreground">Range Start</Label>
+                                                <Input
+                                                    id="edit_range_start"
+                                                    type="datetime-local"
+                                                    value={editCriteria.created_between?.start || ""}
+                                                    onChange={(e) => updateEditDateBetween('start', e.target.value)}
+                                                    className="h-9"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="edit_range_end" className="text-xs text-muted-foreground">Range End</Label>
+                                                <Input
+                                                    id="edit_range_end"
+                                                    type="datetime-local"
+                                                    value={editCriteria.created_between?.end || ""}
+                                                    onChange={(e) => updateEditDateBetween('end', e.target.value)}
+                                                    className="h-9"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="text-xs text-muted-foreground bg-muted p-3 rounded">
+                                    <strong>Note:</strong> All criteria are optional. Only selected criteria will be applied to filter users.
+                                </div>
+                            </div>
+                        )}
+
+                        {segment?.type === "manual" && (
+                            <div className="space-y-3">
+                                <Label>Select Users</Label>
+                                {isLoadingUsers ? (
+                                    <div className="flex items-center justify-center py-8">
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <div className="text-sm text-muted-foreground mb-2">
+                                            {(editFormData.manual_user_ids || []).length} user(s) selected
+                                        </div>
+                                        <Input
+                                            placeholder="Search users by name or email..."
+                                            value={userSearchQuery}
+                                            onChange={(e) => setUserSearchQuery(e.target.value)}
+                                            className="mb-2"
+                                        />
+                                        <div className="max-h-[300px] overflow-y-auto border rounded-md p-3 space-y-2">
+                                            {(() => {
+                                                // Filter users based on search query
+                                                const filteredUsers = allUsers.filter((user) => {
+                                                    const query = userSearchQuery.toLowerCase();
+                                                    return (
+                                                        user.name.toLowerCase().includes(query) ||
+                                                        user.email.toLowerCase().includes(query)
+                                                    );
+                                                });
+
+                                                // Sort: selected users first, then alphabetically by name
+                                                const sortedUsers = filteredUsers.sort((a, b) => {
+                                                    const aSelected = (editFormData.manual_user_ids || []).includes(a.id);
+                                                    const bSelected = (editFormData.manual_user_ids || []).includes(b.id);
+
+                                                    if (aSelected && !bSelected) return -1;
+                                                    if (!aSelected && bSelected) return 1;
+                                                    return a.name.localeCompare(b.name);
+                                                });
+
+                                                if (sortedUsers.length === 0) {
+                                                    return (
+                                                        <div className="text-center py-8 text-sm text-muted-foreground">
+                                                            {userSearchQuery ? "No users found matching your search" : "No users available"}
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return sortedUsers.map((user) => {
+                                                    const isSelected = (editFormData.manual_user_ids || []).includes(user.id);
+                                                    return (
+                                                        <div
+                                                            key={user.id}
+                                                            className="flex items-center gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                                                            onClick={() => toggleUserSelection(user.id)}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isSelected}
+                                                                onChange={() => toggleUserSelection(user.id)}
+                                                                className="h-4 w-4 rounded border-gray-300"
+                                                            />
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="text-sm font-medium truncate">
+                                                                    {user.name}
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground truncate">
+                                                                    {user.email}
+                                                                </div>
+                                                            </div>
+                                                            {isSelected && (
+                                                                <Badge variant="secondary" className="text-xs">
+                                                                    Selected
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                });
+                                            })()}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

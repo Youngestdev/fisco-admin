@@ -27,6 +27,7 @@ export default function AudiencePage() {
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
     const [userSearchQuery, setUserSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false);
+    const [criteria, setCriteria] = useState<Record<string, any>>({});
 
     useEffect(() => {
         loadSegments();
@@ -54,7 +55,7 @@ export default function AudiencePage() {
     async function loadSegments() {
         try {
             const data = await getSegments();
-            setSegments(data);
+            setSegments(data.segments || []);
         } catch (error) {
             console.error("Failed to load segments:", error);
         } finally {
@@ -126,11 +127,8 @@ export default function AudiencePage() {
             if (newSegment.type === "manual") {
                 segmentData.manual_user_ids = selectedUserIds;
             } else {
-                // For dynamic segments, add criteria
-                segmentData.criteria = {
-                    // Placeholder criteria - in real implementation, this would come from a form
-                    total_orders: { "$gt": 5 }
-                };
+                // For dynamic segments, use the criteria from state
+                segmentData.criteria = criteria;
             }
 
             await createSegment(segmentData);
@@ -138,6 +136,7 @@ export default function AudiencePage() {
             setNewSegment({ name: "", description: "", type: "manual" });
             setSelectedUserIds([]);
             setUserSearchQuery("");
+            setCriteria({});
             loadSegments();
         } catch (error) {
             console.error("Failed to create segment:", error);
@@ -152,6 +151,29 @@ export default function AudiencePage() {
                 ? prev.filter(id => id !== userId)
                 : [...prev, userId]
         );
+    };
+
+    const updateCriteria = (field: string, value: any) => {
+        setCriteria(prev => {
+            const newCriteria = { ...prev };
+            if (value === null || value === undefined || value === "" || value === "__any__") {
+                delete newCriteria[field];
+            } else {
+                newCriteria[field] = value;
+            }
+            return newCriteria;
+        });
+    };
+
+    const updateDateBetween = (field: 'start' | 'end', value: string) => {
+        setCriteria(prev => {
+            const current = prev.created_between || {};
+            if (!value) {
+                const { [field]: removed, ...rest } = current;
+                return { ...prev, created_between: Object.keys(rest).length > 0 ? rest : undefined };
+            }
+            return { ...prev, created_between: { ...current, [field]: value } };
+        });
     };
 
     if (isLoading) {
@@ -183,7 +205,7 @@ export default function AudiencePage() {
                             <DialogTitle>Create New Segment</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleCreate}>
-                            <div className="space-y-4 py-4">
+                            <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Segment Name</Label>
                                     <Input
@@ -216,10 +238,216 @@ export default function AudiencePage() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="manual">Manual Selection</SelectItem>
-                                            <SelectItem value="dynamic">Dynamic Criteria (Coming Soon)</SelectItem>
+                                            <SelectItem value="dynamic">Dynamic Criteria</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
+
+                                {newSegment.type === "dynamic" && (
+                                    <div className="space-y-4 border rounded-md p-4">
+                                        <div>
+                                            <Label className="text-base font-semibold">Criteria Builder</Label>
+                                            <p className="text-xs text-muted-foreground mt-1">Configure filtering criteria for this dynamic segment. All fields are optional.</p>
+                                        </div>
+
+                                        {/* User Status Section */}
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-medium text-foreground">User Status</Label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="is_active" className="text-xs text-muted-foreground">Account Status</Label>
+                                                    <Select value={criteria.is_active?.toString() || "__any__"} onValueChange={(v) => updateCriteria('is_active', v === "__any__" ? null : v === "true")}>
+                                                        <SelectTrigger id="is_active" className="h-9">
+                                                            <SelectValue placeholder="Any" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__any__">Any</SelectItem>
+                                                            <SelectItem value="true">Active</SelectItem>
+                                                            <SelectItem value="false">Inactive</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="deletion_requested" className="text-xs text-muted-foreground">Deletion Requested</Label>
+                                                    <Select value={criteria.deletion_requested?.toString() || "__any__"} onValueChange={(v) => updateCriteria('deletion_requested', v === "__any__" ? null : v === "true")}>
+                                                        <SelectTrigger id="deletion_requested" className="h-9">
+                                                            <SelectValue placeholder="Any" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__any__">Any</SelectItem>
+                                                            <SelectItem value="true">Yes</SelectItem>
+                                                            <SelectItem value="false">No</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Verification Status */}
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-medium text-foreground">Verification Status</Label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="nin_verified" className="text-xs text-muted-foreground">NIN Verified</Label>
+                                                    <Select value={criteria.nin_verified?.toString() || "__any__"} onValueChange={(v) => updateCriteria('nin_verified', v === "__any__" ? null : v === "true")}>
+                                                        <SelectTrigger id="nin_verified" className="h-9">
+                                                            <SelectValue placeholder="Any" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__any__">Any</SelectItem>
+                                                            <SelectItem value="true">Verified</SelectItem>
+                                                            <SelectItem value="false">Not Verified</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="bvn_verified" className="text-xs text-muted-foreground">BVN Verified</Label>
+                                                    <Select value={criteria.bvn_verified?.toString() || "__any__"} onValueChange={(v) => updateCriteria('bvn_verified', v === "__any__" ? null : v === "true")}>
+                                                        <SelectTrigger id="bvn_verified" className="h-9">
+                                                            <SelectValue placeholder="Any" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__any__">Any</SelectItem>
+                                                            <SelectItem value="true">Verified</SelectItem>
+                                                            <SelectItem value="false">Not Verified</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="business_info_verified" className="text-xs text-muted-foreground">Business Info Verified</Label>
+                                                    <Select value={criteria.business_info_verified?.toString() || "__any__"} onValueChange={(v) => updateCriteria('business_info_verified', v === "__any__" ? null : v === "true")}>
+                                                        <SelectTrigger id="business_info_verified" className="h-9">
+                                                            <SelectValue placeholder="Any" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__any__">Any</SelectItem>
+                                                            <SelectItem value="true">Verified</SelectItem>
+                                                            <SelectItem value="false">Not Verified</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* User Features */}
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-medium text-foreground">User Features</Label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="has_business" className="text-xs text-muted-foreground">Has Business</Label>
+                                                    <Select value={criteria.has_business?.toString() || "__any__"} onValueChange={(v) => updateCriteria('has_business', v === "__any__" ? null : v === "true")}>
+                                                        <SelectTrigger id="has_business" className="h-9">
+                                                            <SelectValue placeholder="Any" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__any__">Any</SelectItem>
+                                                            <SelectItem value="true">Yes</SelectItem>
+                                                            <SelectItem value="false">No</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="has_storefront" className="text-xs text-muted-foreground">Has Storefront</Label>
+                                                    <Select value={criteria.has_storefront?.toString() || "__any__"} onValueChange={(v) => updateCriteria('has_storefront', v === "__any__" ? null : v === "true")}>
+                                                        <SelectTrigger id="has_storefront" className="h-9">
+                                                            <SelectValue placeholder="Any" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__any__">Any</SelectItem>
+                                                            <SelectItem value="true">Yes</SelectItem>
+                                                            <SelectItem value="false">No</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Tier & KYC */}
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-medium text-foreground">Tier & KYC Level</Label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="tier" className="text-xs text-muted-foreground">User Tier</Label>
+                                                    <Select value={criteria.tier || "__any__"} onValueChange={(v) => updateCriteria('tier', v === "__any__" ? null : v)}>
+                                                        <SelectTrigger id="tier" className="h-9">
+                                                            <SelectValue placeholder="Any" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__any__">Any</SelectItem>
+                                                            <SelectItem value="EARLY_USER">Early User</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="kyc_tier" className="text-xs text-muted-foreground">KYC Tier</Label>
+                                                    <Select value={criteria.kyc_tier || "__any__"} onValueChange={(v) => updateCriteria('kyc_tier', v === "__any__" ? null : v)}>
+                                                        <SelectTrigger id="kyc_tier" className="h-9">
+                                                            <SelectValue placeholder="Any" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__any__">Any</SelectItem>
+                                                            <SelectItem value="TIER_0">Tier 0</SelectItem>
+                                                            <SelectItem value="TIER_1">Tier 1</SelectItem>
+                                                            <SelectItem value="TIER_2">Tier 2</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Date Criteria */}
+                                        <div className="space-y-3">
+                                            <Label className="text-sm font-medium text-foreground">Account Creation Date</Label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="created_after" className="text-xs text-muted-foreground">Created After</Label>
+                                                    <Input
+                                                        id="created_after"
+                                                        type="datetime-local"
+                                                        value={criteria.created_after || ""}
+                                                        onChange={(e) => updateCriteria('created_after', e.target.value || null)}
+                                                        className="h-9"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="created_before" className="text-xs text-muted-foreground">Created Before</Label>
+                                                    <Input
+                                                        id="created_before"
+                                                        type="datetime-local"
+                                                        value={criteria.created_before || ""}
+                                                        onChange={(e) => updateCriteria('created_before', e.target.value || null)}
+                                                        className="h-9"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="pt-2 border-t">
+                                                <Label className="text-xs text-muted-foreground mb-2 block">Or specify a date range (created_between):</Label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="space-y-1.5">
+                                                        <Label htmlFor="range_start" className="text-xs text-muted-foreground">Range Start</Label>
+                                                        <Input
+                                                            id="range_start"
+                                                            type="datetime-local"
+                                                            value={criteria.created_between?.start || ""}
+                                                            onChange={(e) => updateDateBetween('start', e.target.value)}
+                                                            className="h-9"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <Label htmlFor="range_end" className="text-xs text-muted-foreground">Range End</Label>
+                                                        <Input
+                                                            id="range_end"
+                                                            type="datetime-local"
+                                                            value={criteria.created_between?.end || ""}
+                                                            onChange={(e) => updateDateBetween('end', e.target.value)}
+                                                            className="h-9"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {newSegment.type === "manual" && (
                                     <div className="space-y-2">

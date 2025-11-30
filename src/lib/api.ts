@@ -516,7 +516,6 @@ export interface CreateCampaignRequest {
     type: "email" | "sms";
     segment_id: string;
     scheduled_at?: string;
-    template: string;
 }
 
 export interface UpdateCampaignRequest {
@@ -578,6 +577,16 @@ export interface Workflow {
     updated_at: string;
 }
 
+// Pagination
+export interface PaginatedResponse<T> {
+    campaigns?: T[];
+    segments?: T[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+}
+
 export interface CreateWorkflowRequest {
     name: string;
     description?: string;
@@ -595,8 +604,8 @@ export interface UpdateWorkflowRequest {
 }
 
 // Campaigns
-export async function getCampaigns(): Promise<Campaign[]> {
-    return fetchWithAuth("/admin/marketing/campaigns");
+export async function getCampaigns(page = 1, pageSize = 10): Promise<PaginatedResponse<Campaign>> {
+    return fetchWithAuth(`/admin/marketing/campaigns?page_number=${page}&page_size=${pageSize}`);
 }
 
 export async function getCampaign(campaignId: string): Promise<Campaign> {
@@ -642,8 +651,8 @@ export async function resendCampaign(campaignId: string): Promise<{ message: str
 }
 
 // Segments
-export async function getSegments(): Promise<Segment[]> {
-    return fetchWithAuth("/admin/marketing/segments");
+export async function getSegments(page = 1, pageSize = 10): Promise<PaginatedResponse<Segment>> {
+    return fetchWithAuth(`/admin/marketing/segments?page_number=${page}&page_size=${pageSize}`);
 }
 
 export async function getSegment(segmentId: string): Promise<Segment> {

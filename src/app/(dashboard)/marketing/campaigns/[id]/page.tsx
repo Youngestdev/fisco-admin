@@ -38,7 +38,7 @@ export default function CampaignDetailPage() {
                     getSegments()
                 ]);
                 setCampaign(data);
-                setSegments(segmentsData);
+                setSegments(segmentsData.segments || []);
             } catch (error) {
                 console.error("Failed to load campaign:", error);
             } finally {
