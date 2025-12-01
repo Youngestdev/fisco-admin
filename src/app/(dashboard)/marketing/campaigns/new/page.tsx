@@ -52,7 +52,7 @@ export default function NewCampaignPage() {
             const payload: any = {
                 name: formData.name,
                 subject: formData.subject,
-                content: renderCampaignContent(formData.content),
+                content: formData.content,
                 type: formData.type,
                 segment_id: formData.segment_id,
                 template: "marketing-default.html",

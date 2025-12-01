@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { getCampaign, sendCampaign, updateCampaign, deleteCampaign, resendCampaign, getSegments, Campaign, Segment, UpdateCampaignRequest } from "@/lib/api";
+import { getCampaign, sendCampaign, updateCampaign, deleteCampaign, resendCampaign, getSegments, Campaign, Segment, UpdateCampaignRequest, CampaignAnalytics, ClickDetail, OpenDetail } from "@/lib/api";
 import { renderCampaignContent } from "@/lib/campaign-utils";
 import { Loader2, ArrowLeft, Send, Calendar, Mail, Users, Edit, Trash2, RotateCw } from "lucide-react";
 import Link from "next/link";
@@ -22,6 +22,10 @@ export default function CampaignDetailPage() {
     const campaignId = params.id as string;
 
     const [campaign, setCampaign] = useState<Campaign | null>(null);
+    const [analytics, setAnalytics] = useState<CampaignAnalytics | null>(null);
+    const [clickDetails, setClickDetails] = useState<ClickDetail[]>([]);
+    const [openDetails, setOpenDetails] = useState<OpenDetail[]>([]);
+    const [totalRecipients, setTotalRecipients] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -37,7 +41,11 @@ export default function CampaignDetailPage() {
                     getCampaign(campaignId),
                     getSegments()
                 ]);
-                setCampaign(data);
+                setCampaign(data.campaign);
+                setAnalytics(data.analytics);
+                setClickDetails(data.click_details || []);
+                setOpenDetails(data.open_details || []);
+                setTotalRecipients(data.total_recipients || 0);
                 setSegments(segmentsData.segments || []);
             } catch (error) {
                 console.error("Failed to load campaign:", error);
@@ -56,7 +64,11 @@ export default function CampaignDetailPage() {
             await sendCampaign(campaign._id);
             // Reload campaign to get updated status
             const updated = await getCampaign(campaignId);
-            setCampaign(updated);
+            setCampaign(updated.campaign);
+            setAnalytics(updated.analytics);
+            setClickDetails(updated.click_details || []);
+            setOpenDetails(updated.open_details || []);
+            setTotalRecipients(updated.total_recipients || 0);
             toast.success("Campaign queued for sending!");
         } catch (error) {
             console.error("Failed to send campaign:", error);
@@ -120,7 +132,11 @@ export default function CampaignDetailPage() {
             toast.success("Campaign resent successfully!");
             // Reload campaign to get updated status
             const updated = await getCampaign(campaignId);
-            setCampaign(updated);
+            setCampaign(updated.campaign);
+            setAnalytics(updated.analytics);
+            setClickDetails(updated.click_details || []);
+            setOpenDetails(updated.open_details || []);
+            setTotalRecipients(updated.total_recipients || 0);
         } catch (error) {
             console.error("Failed to resend campaign:", error);
             toast.error("Failed to resend campaign. Please try again.");
@@ -214,14 +230,28 @@ export default function CampaignDetailPage() {
                         </>
                     )}
                     {campaign.status === "completed" && (
-                        <Button onClick={handleResend} disabled={isResending}>
-                            {isResending ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <RotateCw className="mr-2 h-4 w-4" />
-                            )}
-                            Resend Campaign
-                        </Button>
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                )}
+                                Delete
+                            </Button>
+                            <Button onClick={handleResend} disabled={isResending}>
+                                {isResending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <RotateCw className="mr-2 h-4 w-4" />
+                                )}
+                                Resend Campaign
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>
@@ -384,6 +414,124 @@ export default function CampaignDetailPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Analytics Section */}
+            {analytics && (
+                <>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Recipients</CardTitle>
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{totalRecipients}</div>
+                                <p className="text-xs text-muted-foreground">Emails sent: {analytics.emails_sent}</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Delivered</CardTitle>
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{analytics.emails_delivered}</div>
+                                <p className="text-xs text-muted-foreground">
+                                    {((analytics.emails_delivered / analytics.emails_sent) * 100).toFixed(1)}% delivery rate
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Opened</CardTitle>
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{analytics.emails_opened}</div>
+                                <p className="text-xs text-muted-foreground">{analytics.open_rate.toFixed(2)}% open rate</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Clicked</CardTitle>
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{analytics.emails_clicked}</div>
+                                <p className="text-xs text-muted-foreground">{analytics.ctr.toFixed(2)}% click rate</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Click Details Table */}
+                    {clickDetails.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Click Details</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="rounded-md border">
+                                    <table className="w-full caption-bottom text-sm">
+                                        <thead className="[&_tr]:border-b">
+                                            <tr className="border-b transition-colors hover:bg-muted/50">
+                                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
+                                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Link</th>
+                                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Clicked At</th>
+                                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">IP Address</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="[&_tr:last-child]:border-0">
+                                            {clickDetails.map((detail, index) => (
+                                                <tr key={index} className="border-b transition-colors hover:bg-muted/50">
+                                                    <td className="p-4 align-middle">{detail.recipient_email}</td>
+                                                    <td className="p-4 align-middle">
+                                                        <a href={detail.clicked_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                                            {detail.clicked_link}
+                                                        </a>
+                                                    </td>
+                                                    <td className="p-4 align-middle">{format(new Date(detail.clicked_at), 'PPp')}</td>
+                                                    <td className="p-4 align-middle">
+                                                        <code className="text-xs bg-muted px-2 py-1 rounded">{detail.ip_address}</code>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Open Details Table */}
+                    {openDetails.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Open Details</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="rounded-md border">
+                                    <table className="w-full caption-bottom text-sm">
+                                        <thead className="[&_tr]:border-b">
+                                            <tr className="border-b transition-colors hover:bg-muted/50">
+                                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
+                                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Opened At</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="[&_tr:last-child]:border-0">
+                                            {openDetails.map((detail, index) => (
+                                                <tr key={index} className="border-b transition-colors hover:bg-muted/50">
+                                                    <td className="p-4 align-middle">{detail.recipient_email}</td>
+                                                    <td className="p-4 align-middle">{format(new Date(detail.opened_at), 'PPp')}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+                </>
+            )}
         </div>
     );
 }

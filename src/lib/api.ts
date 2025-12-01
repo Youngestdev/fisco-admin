@@ -528,6 +528,38 @@ export interface UpdateCampaignRequest {
     template?: string;
 }
 
+export interface CampaignAnalytics {
+    emails_sent: number;
+    emails_delivered: number;
+    emails_opened: number;
+    emails_clicked: number;
+    emails_bounced: number;
+    emails_complained: number;
+    ctr: number;
+    open_rate: number;
+}
+
+export interface ClickDetail {
+    recipient_email: string;
+    clicked_at: string;
+    clicked_link: string;
+    ip_address: string;
+    user_agent: string;
+}
+
+export interface OpenDetail {
+    recipient_email: string;
+    opened_at: string;
+}
+
+export interface CampaignDetailResponse {
+    campaign: Campaign;
+    analytics: CampaignAnalytics;
+    click_details: ClickDetail[];
+    open_details: OpenDetail[];
+    total_recipients: number;
+}
+
 export interface Segment {
     _id: string;
     business_id?: string | null;
@@ -608,7 +640,7 @@ export async function getCampaigns(page = 1, pageSize = 10): Promise<PaginatedRe
     return fetchWithAuth(`/admin/marketing/campaigns?page_number=${page}&page_size=${pageSize}`);
 }
 
-export async function getCampaign(campaignId: string): Promise<Campaign> {
+export async function getCampaign(campaignId: string): Promise<CampaignDetailResponse> {
     return fetchWithAuth(`/admin/marketing/campaigns/${campaignId}`);
 }
 
