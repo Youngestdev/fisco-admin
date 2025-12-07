@@ -201,57 +201,43 @@ export default function CampaignDetailPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <Button variant="outline" onClick={handleEdit}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                    >
+                        {isDeleting ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Trash2 className="mr-2 h-4 w-4" />
+                        )}
+                        Delete
+                    </Button>
+
                     {campaign.status === "draft" && (
-                        <>
-                            <Button variant="outline" onClick={handleEdit}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={handleDelete}
-                                disabled={isDeleting}
-                            >
-                                {isDeleting ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                )}
-                                Delete
-                            </Button>
-                            <Button onClick={handleSend} disabled={isSending}>
-                                {isSending ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Send className="mr-2 h-4 w-4" />
-                                )}
-                                Send Campaign
-                            </Button>
-                        </>
+                        <Button onClick={handleSend} disabled={isSending}>
+                            {isSending ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Send className="mr-2 h-4 w-4" />
+                            )}
+                            Send Campaign
+                        </Button>
                     )}
+
                     {campaign.status === "completed" && (
-                        <>
-                            <Button
-                                variant="outline"
-                                onClick={handleDelete}
-                                disabled={isDeleting}
-                            >
-                                {isDeleting ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                )}
-                                Delete
-                            </Button>
-                            <Button onClick={handleResend} disabled={isResending}>
-                                {isResending ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <RotateCw className="mr-2 h-4 w-4" />
-                                )}
-                                Resend Campaign
-                            </Button>
-                        </>
+                        <Button onClick={handleResend} disabled={isResending}>
+                            {isResending ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <RotateCw className="mr-2 h-4 w-4" />
+                            )}
+                            Resend Campaign
+                        </Button>
                     )}
                 </div>
             </div>
@@ -297,24 +283,22 @@ export default function CampaignDetailPage() {
                                 onChange={(e) => setEditFormData({ ...editFormData, scheduled_at: e.target.value })}
                             />
                         </div>
-                        {campaign?.status === "draft" && (
-                            <div className="space-y-2">
-                                <Label htmlFor="edit-segment">Audience Segment</Label>
-                                <select
-                                    id="edit-segment"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    value={editFormData.segment_id || ""}
-                                    onChange={(e) => setEditFormData({ ...editFormData, segment_id: e.target.value })}
-                                >
-                                    <option value="">Select a segment</option>
-                                    {segments.map((segment) => (
-                                        <option key={segment._id} value={segment._id}>
-                                            {segment.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-segment">Audience Segment</Label>
+                            <select
+                                id="edit-segment"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                value={editFormData.segment_id || ""}
+                                onChange={(e) => setEditFormData({ ...editFormData, segment_id: e.target.value })}
+                            >
+                                <option value="">Select a segment</option>
+                                {segments.map((segment) => (
+                                    <option key={segment._id} value={segment._id}>
+                                        {segment.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsEditing(false)}>

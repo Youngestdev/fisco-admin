@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getWorkflows, createWorkflow, Workflow } from "@/lib/api";
+import { getWorkflows, Workflow } from "@/lib/api";
 import { Plus, GitMerge, Loader2, PlayCircle, PauseCircle } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -14,15 +10,6 @@ import Link from "next/link";
 export default function WorkflowsPage() {
     const [workflows, setWorkflows] = useState<Workflow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isCreating, setIsCreating] = useState(false);
-    const [newWorkflow, setNewWorkflow] = useState({
-        name: "",
-        description: "",
-        trigger_type: "event" as "event" | "schedule",
-        trigger_config: { event: "user.signup" },
-        steps: [],
-    });
 
     useEffect(() => {
         loadWorkflows();
@@ -38,27 +25,6 @@ export default function WorkflowsPage() {
             setIsLoading(false);
         }
     }
-
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsCreating(true);
-        try {
-            await createWorkflow(newWorkflow);
-            setIsDialogOpen(false);
-            setNewWorkflow({
-                name: "",
-                description: "",
-                trigger_type: "event",
-                trigger_config: { event: "user.signup" },
-                steps: []
-            });
-            loadWorkflows();
-        } catch (error) {
-            console.error("Failed to create workflow:", error);
-        } finally {
-            setIsCreating(false);
-        }
-    };
 
     if (isLoading) {
         return (
@@ -77,70 +43,12 @@ export default function WorkflowsPage() {
                         Automate your marketing with event-based workflows.
                     </p>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            New Workflow
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Create New Workflow</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleCreate}>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Workflow Name</Label>
-                                    <Input
-                                        id="name"
-                                        value={newWorkflow.name}
-                                        onChange={(e) => setNewWorkflow({ ...newWorkflow, name: e.target.value })}
-                                        placeholder="e.g. Welcome Series"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">Description</Label>
-                                    <Input
-                                        id="description"
-                                        value={newWorkflow.description}
-                                        onChange={(e) => setNewWorkflow({ ...newWorkflow, description: e.target.value })}
-                                        placeholder="Describe this workflow"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="trigger">Trigger Event</Label>
-                                    <Select
-                                        value={newWorkflow.trigger_config.event}
-                                        onValueChange={(value) => setNewWorkflow({
-                                            ...newWorkflow,
-                                            trigger_config: { event: value }
-                                        })}
-                                        required
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select trigger" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="user.signup">User Signup</SelectItem>
-                                            <SelectItem value="order.created">Order Created</SelectItem>
-                                            <SelectItem value="order.delivered">Order Delivered</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                                <Button type="submit" disabled={isCreating}>
-                                    {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Create Workflow
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <Link href="/marketing/workflows/new">
+                    <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Workflow
+                    </Button>
+                </Link>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -183,10 +91,12 @@ export default function WorkflowsPage() {
                         <p className="mb-4 mt-2 text-sm text-muted-foreground">
                             Create your first automation workflow to engage users automatically.
                         </p>
-                        <Button onClick={() => setIsDialogOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Create Workflow
-                        </Button>
+                        <Link href="/marketing/workflows/new">
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Create Workflow
+                            </Button>
+                        </Link>
                     </div>
                 )}
             </div>

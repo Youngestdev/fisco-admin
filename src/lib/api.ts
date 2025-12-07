@@ -593,6 +593,8 @@ export interface WorkflowStep {
     duration?: number;
     template_id?: string;
     subject?: string;
+    content?: string;
+    template?: string;
     condition?: string;
 }
 

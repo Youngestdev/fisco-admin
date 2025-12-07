@@ -5,14 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { getWorkflow, updateWorkflow, updateWorkflowState, deleteWorkflow, Workflow, UpdateWorkflowRequest } from "@/lib/api";
+import { getWorkflow, updateWorkflow, updateWorkflowState, deleteWorkflow, Workflow, CreateWorkflowRequest } from "@/lib/api";
 import { Loader2, ArrowLeft, GitMerge, PlayCircle, PauseCircle, Mail, Clock, Send, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { WorkflowForm } from "../WorkflowForm";
 
 export default function WorkflowDetailPage() {
     const params = useParams();
@@ -24,7 +22,6 @@ export default function WorkflowDetailPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isTogglingState, setIsTogglingState] = useState(false);
-    const [editFormData, setEditFormData] = useState<Partial<UpdateWorkflowRequest>>({});
 
     useEffect(() => {
         async function loadWorkflow() {
@@ -33,6 +30,7 @@ export default function WorkflowDetailPage() {
                 setWorkflow(data);
             } catch (error) {
                 console.error("Failed to load workflow:", error);
+                toast.error("Failed to load workflow");
             } finally {
                 setIsLoading(false);
             }
@@ -40,20 +38,11 @@ export default function WorkflowDetailPage() {
         loadWorkflow();
     }, [workflowId]);
 
-    const handleEdit = () => {
-        if (!workflow) return;
-        setEditFormData({
-            name: workflow.name,
-            description: workflow.description,
-        });
-        setIsEditing(true);
-    };
-
-    const handleUpdate = async () => {
+    const handleUpdate = async (data: CreateWorkflowRequest) => {
         if (!workflow) return;
 
         try {
-            const updated = await updateWorkflow(workflow._id, editFormData);
+            const updated = await updateWorkflow(workflow._id, data);
             setWorkflow(updated);
             setIsEditing(false);
             toast.success("Workflow updated successfully!");
@@ -123,6 +112,33 @@ export default function WorkflowDetailPage() {
         );
     }
 
+    // Edit Mode
+    if (isEditing) {
+        return (
+            <div className="max-w-4xl space-y-6 pb-20">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => setIsEditing(false)}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h3 className="text-lg font-medium">Edit Workflow</h3>
+                        <p className="text-sm text-muted-foreground">
+                            Update workflow configuration and steps.
+                        </p>
+                    </div>
+                </div>
+
+                <WorkflowForm
+                    initialData={workflow}
+                    onSubmit={handleUpdate}
+                    isLoading={false}
+                    submitLabel="Save Changes"
+                    onCancel={() => setIsEditing(false)}
+                />
+            </div>
+        );
+    }
+
     const getStepIcon = (type: string) => {
         switch (type) {
             case "send_email":
@@ -174,7 +190,7 @@ export default function WorkflowDetailPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleEdit}>
+                    <Button variant="outline" onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                     </Button>
@@ -206,41 +222,6 @@ export default function WorkflowDetailPage() {
                     </Button>
                 </div>
             </div>
-
-            {/* Edit Workflow Dialog */}
-            <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Workflow</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-name">Workflow Name</Label>
-                            <Input
-                                id="edit-name"
-                                value={editFormData.name || ""}
-                                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-description">Description</Label>
-                            <Input
-                                id="edit-description"
-                                value={editFormData.description || ""}
-                                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditing(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleUpdate}>
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>
