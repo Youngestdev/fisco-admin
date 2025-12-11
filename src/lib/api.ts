@@ -793,3 +793,72 @@ export interface MarketingStats {
 export async function getMarketingStats(): Promise<MarketingStats> {
     return fetchWithAuth("/admin/marketing/stats");
 }
+
+// ============================================================================
+// Business Verifications API
+// ============================================================================
+
+export interface VerificationStatus {
+    status: string;
+    message: string;
+    identityType: string;
+}
+
+export interface PendingVerification {
+    user_id: string;
+    user_name: string;
+    user_email: string;
+    business_id: string;
+    business_name: string;
+    business_email: string;
+    document_url: string;
+    verification_type: string;
+    submitted_at: string;
+    latest_status: VerificationStatus;
+}
+
+export interface ApproveVerificationResponse {
+    message: string;
+    user_id: string;
+    user_email: string;
+}
+
+export interface RejectVerificationRequest {
+    reason: string;
+    additional_info?: string;
+}
+
+export interface RejectVerificationResponse {
+    message: string;
+    user_id: string;
+    user_email: string;
+    reason: string;
+}
+
+export async function getPendingVerifications(
+    pageNumber = 1,
+    pageSize = 10
+): Promise<PendingVerification[]> {
+    return fetchWithAuth(
+        `/admin/verifications/pending?page_number=${pageNumber}&page_size=${pageSize}`
+    );
+}
+
+export async function approveVerification(userId: string): Promise<ApproveVerificationResponse> {
+    return fetchWithAuth(`/admin/verifications/${userId}/approve`, {
+        method: "POST",
+    });
+}
+
+export async function rejectVerification(
+    userId: string,
+    data: RejectVerificationRequest
+): Promise<RejectVerificationResponse> {
+    return fetchWithAuth(`/admin/verifications/${userId}/reject`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+}

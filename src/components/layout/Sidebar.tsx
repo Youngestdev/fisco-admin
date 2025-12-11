@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, ShoppingCart, Users, Settings, LogOut, Building2, Store, Megaphone } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Users, Settings, LogOut, Building2, Store, Megaphone, ShieldCheck } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
@@ -22,6 +22,11 @@ const sidebarItems = [
         title: "Businesses",
         href: "/businesses",
         icon: Building2,
+    },
+    {
+        title: "Verifications",
+        href: "/verifications",
+        icon: ShieldCheck,
     },
     {
         title: "Storefronts",
