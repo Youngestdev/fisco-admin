@@ -54,8 +54,10 @@ export default function BusinessInventoryPage() {
         }
     };
 
-    const formatCurrency = (amount: number) =>
-        new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(amount);
+    const formatCurrency = (amount: number) => {
+        const amountInNaira = Math.round(amount / 100 * 100) / 100; // Divide by 100 and round to 2 dp
+        return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(amountInNaira);
+    };
 
     return (
         <motion.div
