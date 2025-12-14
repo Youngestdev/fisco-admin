@@ -9,6 +9,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { motion, AnimatePresence } from "framer-motion";
 import { pageVariants, containerVariants, cardVariants, tableRowVariants } from "@/lib/motion-variants";
+import { formatAddress } from "@/lib/utils";
 
 // Animated component definitions
 const MotionCard = motion(Card);
@@ -109,7 +110,7 @@ export default function BusinessCustomersPage() {
                                                 <TableCell>
                                                     <div className="flex items-center gap-2 text-sm max-w-xs truncate">
                                                         <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                                                        {customer.address}
+                                                        {formatAddress(customer.address)}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground">{customer.vendor}</TableCell>

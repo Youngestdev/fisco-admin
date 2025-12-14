@@ -106,6 +106,20 @@ export async function deletePermission(id: string) {
 }
 
 // ============================================================================
+// Address Types
+// ============================================================================
+
+export interface AddressDict {
+    city: string;
+    country: string;
+    line1: string;
+    state: string;
+    zip: string;
+}
+
+export type Address = string | AddressDict;
+
+// ============================================================================
 // Business & Storefront Types
 // ============================================================================
 
@@ -114,7 +128,7 @@ export interface BusinessListItem {
     name: string;
     email: string;
     phone_no: string;
-    address: string;
+    address: Address;
     customers_count: number;
     orders_count: number;
     has_storefront: boolean;
@@ -126,7 +140,7 @@ export interface Customer {
     name: string;
     email: string;
     phone_no: string;
-    address: string;
+    address: Address;
     vendor: string;
     orders: any[];
 }
@@ -150,7 +164,7 @@ export interface OrderOwner {
     name: string;
     email: string;
     phone_no: string;
-    address: string;
+    address: Address;
     vendor: string;
 }
 
@@ -241,7 +255,7 @@ export interface BusinessDetail {
     name: string;
     email: string;
     phone_no: string;
-    address: string;
+    address: Address;
     profile_photo_url?: string;
     website?: string;
     has_storefront: boolean;
@@ -272,7 +286,7 @@ export interface StorefrontListItem {
 
 export interface BusinessSchema {
     id: string;
-    address: string;
+    address: Address;
     customers: number;
     email: string;
     name: string;
@@ -437,7 +451,7 @@ export interface BusinessSearchResult {
     name: string;
     email: string;
     phone_no: string;
-    address: string;
+    address: Address;
     customers_count: number;
     orders_count: number;
     has_storefront: boolean;

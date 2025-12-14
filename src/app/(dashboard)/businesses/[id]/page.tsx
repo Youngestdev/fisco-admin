@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { pageVariants, containerVariants, cardVariants, tableRowVariants } from "@/lib/motion-variants";
+import { formatAddress } from "@/lib/utils";
 
 // Animated component definitions (outside functional component to avoid re-creation)
 const MotionCard = motion(Card);
@@ -139,7 +140,7 @@ export default function BusinessDetailsPage() {
                             </div>
                             <div className="col-span-1 md:col-span-2">
                                 <p className="text-sm font-medium text-muted-foreground">Address</p>
-                                <p>{business.address}</p>
+                                <p>{formatAddress(business.address)}</p>
                             </div>
                             {business.website && (
                                 <div className="col-span-1 md:col-span-2">
@@ -369,7 +370,7 @@ export default function BusinessDetailsPage() {
                                             <TableCell className="font-medium">{customer.name}</TableCell>
                                             <TableCell>{customer.email}</TableCell>
                                             <TableCell>{customer.phone_no}</TableCell>
-                                            <TableCell>{customer.address}</TableCell>
+                                            <TableCell>{formatAddress(customer.address)}</TableCell>
                                         </MotionTableRow>
                                     ))}
                                 </TableBody>

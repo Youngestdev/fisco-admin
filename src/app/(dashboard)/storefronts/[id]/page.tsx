@@ -9,6 +9,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { pageVariants, containerVariants, itemVariants, cardVariants } from "@/lib/motion-variants";
+import { formatAddress } from "@/lib/utils";
 
 const MotionCard = motion(Card);
 
@@ -65,16 +66,30 @@ export default function StorefrontDetailsPage() {
             exit="exit"
         >
             <motion.div
-                className="flex items-center gap-4"
+                className="flex items-center justify-between gap-4"
                 variants={itemVariants}
             >
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft className="h-4 w-4" />
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <h2 className="text-3xl font-bold tracking-tight">{storefront.name}</h2>
+                    <Badge variant={storefront.status === "active" ? "default" : "secondary"}>
+                        {storefront.status}
+                    </Badge>
+                </div>
+                <Button
+                    variant="default"
+                    onClick={() => {
+                        const url = storefront.custom_domain
+                            ? `https://${storefront.custom_domain}`
+                            : `https://${storefront.subdomain}.usefisco.shop`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                    }}
+                >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Visit Storefront
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight">{storefront.name}</h2>
-                <Badge variant={storefront.status === "active" ? "default" : "secondary"}>
-                    {storefront.status}
-                </Badge>
             </motion.div>
 
             {/* Statistics Cards */}
@@ -230,7 +245,7 @@ export default function StorefrontDetailsPage() {
                         </div>
                         <div className="col-span-2">
                             <p className="text-sm font-medium text-muted-foreground">Address</p>
-                            <p>{storefront.business.address}</p>
+                            <p>{formatAddress(storefront.business.address)}</p>
                         </div>
                         {storefront.business.website && (
                             <div className="col-span-2">
