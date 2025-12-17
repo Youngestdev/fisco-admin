@@ -17,8 +17,17 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { pageVariants, containerVariants, itemVariants, tableRowVariants, buttonTap, buttonHover } from "@/lib/motion-variants";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 export default function BusinessesPage() {
+    return (
+        <PermissionGuard permission="businesses:view">
+            <BusinessesContent />
+        </PermissionGuard>
+    );
+}
+
+function BusinessesContent() {
     const [businesses, setBusinesses] = useState<BusinessListItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);

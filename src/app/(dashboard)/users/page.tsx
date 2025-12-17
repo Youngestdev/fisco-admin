@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { pageVariants, containerVariants, itemVariants, tableRowVariants, buttonTap, buttonHover } from "@/lib/motion-variants";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 interface User {
     id: string;
@@ -30,6 +31,14 @@ interface User {
 }
 
 export default function UsersPage() {
+    return (
+        <PermissionGuard permission="users:view">
+            <UsersContent />
+        </PermissionGuard>
+    );
+}
+
+function UsersContent() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);

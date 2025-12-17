@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getOrders } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Package, Truck, CheckCircle, XCircle, Clock } from "lucide-react";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 interface OrderStats {
     total_orders: number;
@@ -16,6 +17,14 @@ interface OrderStats {
 }
 
 export default function OrdersPage() {
+    return (
+        <PermissionGuard permission="orders:view">
+            <OrdersContent />
+        </PermissionGuard>
+    );
+}
+
+function OrdersContent() {
     const [stats, setStats] = useState<OrderStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");

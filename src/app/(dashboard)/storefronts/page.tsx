@@ -17,8 +17,17 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { pageVariants, containerVariants, itemVariants, tableRowVariants, buttonTap, buttonHover } from "@/lib/motion-variants";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 export default function StorefrontsPage() {
+    return (
+        <PermissionGuard permission="storefronts:view">
+            <StorefrontsContent />
+        </PermissionGuard>
+    );
+}
+
+function StorefrontsContent() {
     const [storefronts, setStorefronts] = useState<StorefrontListItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);

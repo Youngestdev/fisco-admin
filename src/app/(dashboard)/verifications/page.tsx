@@ -47,8 +47,17 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 export default function VerificationsPage() {
+    return (
+        <PermissionGuard permission="verifications:view">
+            <VerificationsContent />
+        </PermissionGuard>
+    );
+}
+
+function VerificationsContent() {
     const [verifications, setVerifications] = useState<PendingVerification[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);

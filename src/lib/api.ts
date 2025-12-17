@@ -42,6 +42,24 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     return response.json();
 }
 
+// ============================================================================
+// Admin Profile
+// ============================================================================
+
+export interface AdminProfile {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    permissions: string[];
+    is_active: boolean;
+    created_at: string;
+}
+
+export async function getAdminProfile(): Promise<AdminProfile> {
+    return fetchWithAuth("/admin/me");
+}
+
 export async function getUsers(page = 1, limit = 10, inactive = false): Promise<UserSearchResult[]> {
     const data = await fetchWithAuth(`/admin/users?page_number=${page}&page_size=${limit}&inactive=${inactive}`);
     if (Array.isArray(data)) {
@@ -875,4 +893,171 @@ export async function rejectVerification(
         },
         body: JSON.stringify(data),
     });
+}
+
+// ============================================================================
+// Admin Transfers API
+// ============================================================================
+
+export interface FailedTransferAttempt {
+    attempt_number: number;
+    error_type: string;
+    error_message: string;
+    created_at: string;
+}
+
+export interface Withdrawal {
+    id: string;
+    business_id: string;
+    amount: number;
+    status: "pending" | "processing" | "completed" | "failed" | "refunded";
+    failed_attempts_count: number;
+    created_at: string;
+    transfer_code?: string;
+    account_name?: string;
+    bank_name?: string;
+    failure_reason?: string;
+}
+
+export interface WithdrawalListResponse {
+    total: number;
+    page: number;
+    per_page: number;
+    withdrawals: Withdrawal[];
+}
+
+export interface WithdrawalDetail extends Withdrawal {
+    failed_attempts: FailedTransferAttempt[];
+    refunds: Refund[];
+}
+
+export interface FailedTransfer {
+    id: string;
+    withdrawal_id: string;
+    business_id: string;
+    attempt_number: number;
+    error_type: string;
+    error_message: string;
+    created_at: string;
+}
+
+export interface FailedTransfersListResponse {
+    total: number;
+    page: number;
+    per_page: number;
+    failed_transfers: FailedTransfer[];
+}
+
+export interface Refund {
+    _id: string;
+    withdrawal_id: string;
+    business_id: string;
+    wallet_id: string;
+    amount: number;
+    reason: string;
+    status: "pending" | "processing" | "completed" | "failed";
+    created_at: string;
+    processed_at?: string;
+}
+
+export interface RefundsListResponse {
+    total: number;
+    page: number;
+    per_page: number;
+    refunds: Refund[];
+}
+
+export interface CreateRefundRequest {
+    withdrawal_id: string;
+    reason: string;
+}
+
+export interface CreateRefundResponse {
+    message: string;
+    refund_id: string;
+    amount_refunded: number;
+}
+
+export interface RetryWithdrawalResponse {
+    message: string;
+    withdrawal: Withdrawal;
+}
+
+export interface WithdrawalsQueryParams {
+    business_id?: string;
+    status?: string;
+    page?: number;
+    per_page?: number;
+}
+
+export interface FailedTransfersQueryParams {
+    withdrawal_id?: string;
+    business_id?: string;
+    page?: number;
+    per_page?: number;
+}
+
+export interface RefundsQueryParams {
+    withdrawal_id?: string;
+    business_id?: string;
+    status?: string;
+    page?: number;
+    per_page?: number;
+}
+
+// List All Withdrawals
+export async function getWithdrawals(
+    params: WithdrawalsQueryParams = {}
+): Promise<WithdrawalListResponse> {
+    const { business_id, status, page = 1, per_page = 50 } = params;
+    let url = `/admin/transfers/withdrawals?page=${page}&per_page=${per_page}`;
+    if (business_id) url += `&business_id=${encodeURIComponent(business_id)}`;
+    if (status) url += `&status=${encodeURIComponent(status)}`;
+    return fetchWithAuth(url);
+}
+
+// Get Withdrawal Details
+export async function getWithdrawal(withdrawalId: string): Promise<WithdrawalDetail> {
+    return fetchWithAuth(`/admin/transfers/withdrawals/${withdrawalId}`);
+}
+
+// Retry Failed Withdrawal
+export async function retryWithdrawal(withdrawalId: string): Promise<RetryWithdrawalResponse> {
+    return fetchWithAuth(`/admin/transfers/withdrawals/${withdrawalId}/retry`, {
+        method: "POST",
+    });
+}
+
+// List Failed Transfers
+export async function getFailedTransfers(
+    params: FailedTransfersQueryParams = {}
+): Promise<FailedTransfersListResponse> {
+    const { withdrawal_id, business_id, page = 1, per_page = 50 } = params;
+    let url = `/admin/transfers/failed?page=${page}&per_page=${per_page}`;
+    if (withdrawal_id) url += `&withdrawal_id=${encodeURIComponent(withdrawal_id)}`;
+    if (business_id) url += `&business_id=${encodeURIComponent(business_id)}`;
+    return fetchWithAuth(url);
+}
+
+// Create Refund
+export async function createRefund(data: CreateRefundRequest): Promise<CreateRefundResponse> {
+    return fetchWithAuth("/admin/transfers/refunds", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+}
+
+// List Refunds
+export async function getRefunds(
+    params: RefundsQueryParams = {}
+): Promise<RefundsListResponse> {
+    const { withdrawal_id, business_id, status, page = 1, per_page = 50 } = params;
+    let url = `/admin/transfers/refunds?page=${page}&per_page=${per_page}`;
+    if (withdrawal_id) url += `&withdrawal_id=${encodeURIComponent(withdrawal_id)}`;
+    if (business_id) url += `&business_id=${encodeURIComponent(business_id)}`;
+    if (status) url += `&status=${encodeURIComponent(status)}`;
+    return fetchWithAuth(url);
 }

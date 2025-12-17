@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { LayoutDashboard, ShoppingCart, Users, Settings, LogOut, Building2, Store, Megaphone, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Users, Settings, LogOut, Building2, Store, Megaphone, ShieldCheck, ArrowLeftRight } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
@@ -42,6 +42,11 @@ const sidebarItems = [
         title: "Orders",
         href: "/orders",
         icon: ShoppingCart,
+    },
+    {
+        title: "Transfers",
+        href: "/transfers",
+        icon: ArrowLeftRight,
     },
     {
         title: "Marketing",
