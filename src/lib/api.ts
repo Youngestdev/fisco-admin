@@ -521,7 +521,7 @@ export async function searchOrders(query: string): Promise<OrderSearchResult[]> 
 // ============================================================================
 
 export interface Campaign {
-    _id: string;
+    id: string;
     business_id?: string | null;
     name: string;
     subject: string;
@@ -589,7 +589,7 @@ export interface CampaignDetailResponse {
 }
 
 export interface Segment {
-    _id: string;
+    id: string;
     business_id?: string | null;
     name: string;
     description: string;
@@ -627,7 +627,7 @@ export interface WorkflowStep {
 }
 
 export interface Workflow {
-    _id: string;
+    id: string;
     business_id?: string | null;
     name: string;
     description: string;
@@ -752,7 +752,7 @@ export interface SegmentAudience {
     segment_name: string;
     total_users: number;
     users: {
-        _id: string;
+        id: string;
         business_id: string;
         name: string;
         email: string;
@@ -945,7 +945,7 @@ export interface FailedTransfersListResponse {
 }
 
 export interface Refund {
-    _id: string;
+    id: string;
     withdrawal_id: string;
     business_id: string;
     wallet_id: string;
