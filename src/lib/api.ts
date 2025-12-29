@@ -30,12 +30,8 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     });
 
     if (!response.ok) {
-        if (response.status === 401) {
-            // Handle unauthorized (redirect to login)
-            if (typeof window !== "undefined") {
-                window.location.href = "/login";
-            }
-        }
+        // Don't redirect here on 401 - let the AuthContext handle it
+        // to avoid infinite redirect loops when checking auth status
         throw new Error(`API Error: ${response.statusText}`);
     }
 
