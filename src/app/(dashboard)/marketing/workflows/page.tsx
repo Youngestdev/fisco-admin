@@ -53,7 +53,7 @@ export default function WorkflowsPage() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {workflows.map((workflow) => (
-                    <Link key={workflow._id} href={`/marketing/workflows/${workflow._id}`}>
+                    <Link key={workflow.id} href={`/marketing/workflows/${workflow.id}`}>
                         <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                             <div className="p-6 space-y-4">
                                 <div className="flex items-center justify-between">

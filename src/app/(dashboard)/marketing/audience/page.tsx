@@ -521,7 +521,7 @@ export default function AudiencePage() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {segments.map((segment) => (
-                    <Link key={segment._id} href={`/marketing/audience/${segment._id}`}>
+                    <Link key={segment.id} href={`/marketing/audience/${segment.id}`}>
                         <div className="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                             <div className="p-6 space-y-2">
                                 <div className="flex items-center justify-between">

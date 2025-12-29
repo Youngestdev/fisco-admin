@@ -137,7 +137,7 @@ export default function NewCampaignPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 {segments.map((segment) => (
-                                    <SelectItem key={segment._id} value={segment._id}>
+                                    <SelectItem key={segment.id} value={segment.id}>
                                         {segment.name}
                                     </SelectItem>
                                 ))}

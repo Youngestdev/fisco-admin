@@ -78,7 +78,7 @@ export default function SegmentDetailPage() {
 
         setIsDeleting(true);
         try {
-            await deleteSegment(segment._id);
+            await deleteSegment(segment.id);
             toast.success("Segment deleted successfully!");
             router.push("/marketing/audience");
         } catch (error) {
@@ -156,7 +156,7 @@ export default function SegmentDetailPage() {
                 updateData.criteria = editCriteria;
             }
 
-            await updateSegment(segment._id, updateData);
+            await updateSegment(segment.id, updateData);
             toast.success("Segment updated successfully");
             setIsEditing(false);
             // Reload segment data
@@ -619,7 +619,7 @@ export default function SegmentDetailPage() {
                                     </thead>
                                     <tbody className="[&_tr:last-child]:border-0">
                                         {audience.users.map((user) => (
-                                            <tr key={user._id} className="border-b transition-colors hover:bg-muted/50">
+                                            <tr key={user.id} className="border-b transition-colors hover:bg-muted/50">
                                                 <td className="p-4 align-middle font-medium">{user.name}</td>
                                                 <td className="p-4 align-middle">
                                                     <div className="flex items-center gap-2">

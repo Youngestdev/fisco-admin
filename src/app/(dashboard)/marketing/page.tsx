@@ -110,12 +110,12 @@ export default function MarketingPage() {
                             <div className="divide-y">
                                 {stats.recent_campaigns.map((campaign, index) => (
                                     <motion.div
-                                        key={campaign._id}
+                                        key={campaign.id}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
                                     >
-                                        <Link href={`/marketing/campaigns/${campaign._id}`}>
+                                        <Link href={`/marketing/campaigns/${campaign.id}`}>
                                             <motion.div
                                                 className="flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all duration-300 cursor-pointer group"
                                                 whileHover={{ x: 4 }}

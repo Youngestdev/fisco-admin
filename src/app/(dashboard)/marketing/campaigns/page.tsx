@@ -82,9 +82,9 @@ export default function CampaignsPage() {
                             ) : (
                                 campaigns.map((campaign, index) => (
                                     <motion.tr
-                                        key={campaign._id}
+                                        key={campaign.id}
                                         className="border-b transition-all hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent cursor-pointer group"
-                                        onClick={() => router.push(`/marketing/campaigns/${campaign._id}`)}
+                                        onClick={() => router.push(`/marketing/campaigns/${campaign.id}`)}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ duration: 0.3, delay: index * 0.05 }}

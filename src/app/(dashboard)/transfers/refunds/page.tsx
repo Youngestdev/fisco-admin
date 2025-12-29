@@ -171,12 +171,12 @@ function RefundsContent() {
                             <AnimatePresence mode="wait">
                                 {refunds.map((refund) => (
                                     <MotionTableRow
-                                        key={refund._id}
+                                        key={refund.id}
                                         variants={tableRowVariants}
                                         layout
                                     >
                                         <TableCell className="font-mono text-xs">
-                                            {refund._id.slice(0, 8)}...
+                                            {refund.id.slice(0, 8)}...
                                         </TableCell>
                                         <TableCell>
                                             <Link

@@ -360,7 +360,7 @@ export default function WithdrawalDetailPage() {
                         <div className="space-y-4">
                             {withdrawal.refunds.map((refund) => (
                                 <div
-                                    key={refund._id}
+                                    key={refund.id}
                                     className="flex items-start justify-between p-4 bg-muted/50 rounded-lg"
                                 >
                                     <div>

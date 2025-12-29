@@ -61,7 +61,7 @@ export default function CampaignDetailPage() {
 
         setIsSending(true);
         try {
-            await sendCampaign(campaign._id);
+            await sendCampaign(campaign.id);
             // Reload campaign to get updated status
             const updated = await getCampaign(campaignId);
             setCampaign(updated.campaign);
@@ -94,7 +94,7 @@ export default function CampaignDetailPage() {
         if (!campaign) return;
 
         try {
-            const updated = await updateCampaign(campaign._id, editFormData);
+            const updated = await updateCampaign(campaign.id, editFormData);
             setCampaign(updated);
             setIsEditing(false);
             toast.success("Campaign updated successfully!");
@@ -112,7 +112,7 @@ export default function CampaignDetailPage() {
 
         setIsDeleting(true);
         try {
-            await deleteCampaign(campaign._id);
+            await deleteCampaign(campaign.id);
             toast.success("Campaign deleted successfully!");
             router.push("/marketing/campaigns");
         } catch (error) {
@@ -128,7 +128,7 @@ export default function CampaignDetailPage() {
 
         setIsResending(true);
         try {
-            await resendCampaign(campaign._id);
+            await resendCampaign(campaign.id);
             toast.success("Campaign resent successfully!");
             // Reload campaign to get updated status
             const updated = await getCampaign(campaignId);
@@ -293,7 +293,7 @@ export default function CampaignDetailPage() {
                             >
                                 <option value="">Select a segment</option>
                                 {segments.map((segment) => (
-                                    <option key={segment._id} value={segment._id}>
+                                    <option key={segment.id} value={segment.id}>
                                         {segment.name}
                                     </option>
                                 ))}

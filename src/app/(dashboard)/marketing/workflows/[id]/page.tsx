@@ -42,7 +42,7 @@ export default function WorkflowDetailPage() {
         if (!workflow) return;
 
         try {
-            const updated = await updateWorkflow(workflow._id, data);
+            const updated = await updateWorkflow(workflow.id, data);
             setWorkflow(updated);
             setIsEditing(false);
             toast.success("Workflow updated successfully!");
@@ -57,7 +57,7 @@ export default function WorkflowDetailPage() {
 
         setIsTogglingState(true);
         try {
-            const updated = await updateWorkflowState(workflow._id, !workflow.is_active);
+            const updated = await updateWorkflowState(workflow.id, !workflow.is_active);
             setWorkflow(updated);
             toast.success(`Workflow ${updated.is_active ? 'activated' : 'deactivated'} successfully!`);
         } catch (error) {
@@ -76,7 +76,7 @@ export default function WorkflowDetailPage() {
 
         setIsDeleting(true);
         try {
-            await deleteWorkflow(workflow._id);
+            await deleteWorkflow(workflow.id);
             toast.success("Workflow deleted successfully!");
             router.push("/marketing/workflows");
         } catch (error) {
